@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+    <head>
+        <meta charset="UTF-8">
+        <title>添加訂單產品</title>
+        <meta name="renderer" content="webkit">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+        <link rel="stylesheet" href="/static/css/font.css">
+        <link rel="stylesheet" href="/static/css/xadmin.css">
+        <script type="text/javascript" src="/static/lib/layui/layui.js" charset="utf-8"></script>
+        <script type="text/javascript" src="/static/js/xadmin.js"></script>
+        <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+        <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+        <!--[if lt IE 9]>
+            <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+            <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body>
+        <div class="layui-fluid">
+            <div class="layui-row">
+                <form class="layui-form" onclick="return false">
+                    <div class="layui-form-item">
+                        <label for="L_pass" class="layui-form-label" style="width: 35px;">
+                            <span class="x-red">*</span>產品:
+                        </label>
+
+                        <div class="layui-input-inline" style="margin-left: 75px;">
+                            <input
+                                    type="text"
+                                    id="Name"
+                                    name="Name"
+                                    lay-verify="required"
+                                    autocomplete="off"
+                                    class="layui-input"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label for="L_pass" class="layui-form-label" style="width: 35px;">
+                            <span class="x-red">*</span>數量:
+                        </label>
+                        <div class="layui-input-inline" style="margin-left: 75px;">
+                            <input
+                                    type="text"
+                                    id="Num"
+                                    name="Num"
+                                    lay-verify="number"
+                                    autocomplete="off"
+                                    class="layui-input"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label for="L_pass" class="layui-form-label" style="width: 35px;">
+                            <span class="x-red">*</span>單價:
+                        </label>
+                        <div class="layui-input-inline" style="margin-left: 75px;">
+                            <input
+                                    type="text"
+                                    id="Price"
+                                    name="Price"
+                                    lay-verify="number"
+                                    autocomplete="off"
+                                    class="layui-input"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="layui-form-item">
+                        <label for="L_repass" class="layui-form-label"></label>
+                        <button  class="layui-btn" lay-filter="Add" lay-submit="">
+                        增加
+                        </button>
+                        <button class="layui-btn" id="Search">
+                            <i class="layui-icon">&#xe615;</i>
+                        </button>
+                    </div>
+
+                    <select class="form-control" lay-filter="Item" id="Item">
+                        <option>--請先搜索--</option>
+                    </select>
+
+                </form>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        /**
+         * 傳入異步傳回的產品資料，渲染下拉框
+         * @param ItemList
+         * @param form
+         * @constructor
+         */
+        function GetItemListForSelect(ItemList, form){
+            window.ItemList = ItemList;
+            let selectOption = "";
+            selectOption += "<option value='Prompt'>--請選擇產品--</option>";
+            for (let x in ItemList) {
+                if (ItemList.hasOwnProperty(x) && ItemList[x] != null){
+                    let ShowString = ItemList[x]['Name'] + ";";
+                    ShowString += ItemList[x]['Num'] + ";";
+                    ShowString += ItemList[x]['Price'] + ";";
+                    selectOption += "<option value=" + x + ">" + ShowString + "</option>";
+                }
+            }
+            $('#Item').html(selectOption);
+            form.render('select');
+        }
+
+        function getQueryVariable(variable){
+               let query = window.location.search.substring(1);
+               let vars = query.split("&");
+               for (let i=0;i<vars.length;i++) {
+                       let pair = vars[i].split("=");
+                       if(pair[0] == variable){return pair[1];}
+               }
+               return(false);
+        }
+
+        layui.use(['form', 'layer'],
+            function() {
+                let form = layui.form,
+                layer = layui.layer;
+
+                //监听提交
+                form.on('submit(Add)',function() {
+                    layer.msg("添加中...", {icon: 16,shade: 0.3,time: 0});
+
+                    $.ajax({
+                        type:'post',
+                        url:"./AddItem/Add/",
+                        data:{
+                            OrderID: getQueryVariable("OrderID"),
+                            Name:$("#Name").val(),
+                            Num:$("#Num").val(),
+                            Price:$("#Price").val(),
+                            csrfmiddlewaretoken:'{{ csrf_token }}',
+                        },
+                        success:function (data) {
+                            if(data.status) {
+                                let index = parent.layer.getFrameIndex(window.name);
+                                parent.layer.close(index)
+                            }else {
+                                layer.alert(data.msg, {icon: 2});
+                            }
+                        }
+                    });
+                    return false;
+                });
+
+                //搜索產品資料
+                $('#Search').click(function () {
+                    $.ajax({
+                        type:'post',
+                        url:"./AddItem/GetItemList/",
+                        data:{
+                            Name:$("#Name").val(),
+                            csrfmiddlewaretoken:'{{ csrf_token }}',
+                        },
+                        success:function (data) {
+                            if(data.status) {
+                                let ItemList = data["data"];
+                                new GetItemListForSelect(ItemList, form);
+                            }
+                        }
+                    });
+                });
+
+                /**
+                 * 下拉選擇，自動填入商品資料
+                 */
+                form.on('select(Item)', function(data){
+                    if(data.value!== "Prompt"){
+                        $("#Name").val(window.ItemList[data.value]['Name']);
+                        $("#Num").val(window.ItemList[data.value]['Num']);
+                        $("#Price").val(window.ItemList[data.value]['Price']);
+                    }
+                });
+
+            });
+    </script>
+</html>

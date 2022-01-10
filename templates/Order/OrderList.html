@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+    
+    <head>
+        <meta charset="UTF-8">
+        <title>訂單列表</title>
+        <meta name="renderer" content="webkit">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+        <link rel="stylesheet" href="/static/css/font.css">
+        <link rel="stylesheet" href="/static/css/xadmin.css">
+        <script src="/static/lib/layui/layui.js" charset="utf-8"></script>
+        <script type="text/javascript" src="/static/js/xadmin.js"></script>
+        <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+        <!--[if lt IE 9]>
+          <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+          <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <style type="text/css" >
+            .layui-table Img {
+                max-width: 300px
+            }
+            #ButtonDiv {
+                width:100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-top: 1%;
+                margin-bottom: 1%;
+            }
+            #OpenNewOrder{
+                width: 50%;
+                font-size: x-large;
+            }
+            #FindOrder{
+                width: 50%;
+                font-size: x-large;
+            }
+
+
+        </style>
+    </head>
+    
+    <body>
+        <div class="x-nav">
+            <span class="layui-breadcrumb">
+                <a href="">首页</a>
+                <a href="">訂單管理</a>
+                <a>
+                    <cite>訂單列表</cite></a>
+            </span>
+            <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" onclick="location.reload()" title="刷新">
+                <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+            </a>
+        </div>
+        <div class="layui-fluid">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md12">
+                    <div class="layui-card">
+                        <div class="layui-card-body">
+
+                            <div id="ButtonDiv">
+                                <button class="layui-btn layui-btn-radius layui-btn-warm" id="OpenNewOrder">
+                                    開新單
+                                </button>
+                            </div>
+
+                            <div id="ButtonDiv">
+                                <button class="layui-btn layui-btn-radius layui-btn-sm" id="FindOrder">
+                                    查找訂單
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="layui-card">
+                        <div class="layui-card-body">
+                            <form class="layui-form" onclick="return false">
+                                <input
+                                    type="checkbox" id="DataDisplay"
+                                    lay-filter="DataDisplay"
+                                    lay-skin="switch" lay-text="顯示全部|顯示未完成">
+                            </form>
+
+                            <table class="layui-table" id="OrderTable" lay-filter="OrderTable"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        /**
+         * 表格刷新（不帶參數）
+         */
+        function TableReload() {
+            window.OrderTable.reload({
+                where:{
+                    DataDisplay: window.DataDisplay,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                }
+            });
+        }
+
+        /**
+         * 新增訂單
+         */
+        function OpenNewOrder() {
+            window.NewOrderID = "";
+            layer.open({
+                type: 2,
+                title:'新增訂單',
+                skin:'layui-layer-rim',
+                area:['auto', '70%'],
+                content: 'OpenNewOrder',
+                end : function() {
+                    TableReload();
+                    if(window.NewOrderID !== "")
+                        OpenOrderInfo(window.NewOrderID);
+                }
+            });
+        }
+
+        /**
+         * 查看訂單詳情頁面
+         */
+        function OpenOrderInfo(OrderID) {
+            window.open('OrderInfo?OrderID=C' + OrderID.substr(1));
+        }
+
+        /**
+         * 搜索
+         */
+        function Search() {
+            let key = "";
+            layer.prompt({title: '查詢訂單(輸入關鍵字)'},
+                function(value, index){
+                    key = value;
+                    let loading = layer.msg("搜索中...", {icon: 16,shade: 0.3,time: 0});
+                    if(key === ""){
+                        TableReload();
+                    }else {
+                        let where = {
+                            Key:key,
+                            csrfmiddlewaretoken: '{{ csrf_token }}'
+                        };
+                        window.OrderTable.reload({
+                            where:where
+                        });
+                    }
+                    layer.close(loading);
+                    layer.close(index);
+                }
+            );
+        }
+
+        function PretreatmentTableData(Data){
+            /**
+             * 初始化數據
+             * @type {number}
+             */
+
+            for(let x in Data['data']){
+                if(Data['data'].hasOwnProperty(x) && Data['data'][x] != null){
+                    let Description = '<a type="button"';
+                    Description += 'onclick="OpenOrderInfo(\''+Data['data'][x]['OrderID']+'\')"';
+                    Description += ' style="display: flex;justify-content: center;">';
+
+                    if(Data['data'][x]['WhetherPaid'] === 0){
+                        Description += "<p style='color: red;'>N</p>";
+                    }else{
+                        Description +=  "<p style='color: green;'>Y</p>";
+                    }
+
+                    Description += "/";
+
+                    if(Data['data'][x]['ShippingStatus'] === 0){
+                        Description += "<p style='color: red;'>N</p>";
+                    }else{
+                        Description +=  "<p style='color: green;'>Y</p>";
+                    }
+
+                    Description += Data['data'][x]['Description'] +"</a>";
+                    Data['data'][x]['Description'] = Description;
+                }
+            }
+            return Data
+        }
+    </script>
+
+	<script>
+		layui.use(['table', 'form'],
+			function() {
+                let table = layui.table;
+                let form = layui.form;
+                window.DataDisplay = 0;
+
+                window.OrderTable = table.render({
+                    elem: "#OrderTable",
+                    url: "./OrderList/GetOrderList/",
+                    method: "Post",
+                    where: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    toolbar: '#OrderTableToolbar',
+                    defaultToolbar: [],
+                    limit: 30,
+                    page: true,
+                    parseData: function (res) {
+                        return new PretreatmentTableData(res)
+                    },
+                    cols: [[
+                        {field: "Description", title: "付款/取货/描述", align: "center"}
+                    ]],
+                });
+
+                // 顯示未完成和完成數據
+                form.on('switch(DataDisplay)', function(data){
+                    if(data.value){
+                        if(window.DataDisplay === 0){
+                            window.DataDisplay = 1;
+                        }else{
+                            window.DataDisplay = 0;
+                        }
+                    }
+                   TableReload();
+
+                });
+
+                // 創建新單界面
+                $('#OpenNewOrder').click(function () {
+                    OpenNewOrder();
+                });
+
+                $('#FindOrder').click(function () {
+                    Search();
+                });
+
+            }
+		);
+	
+	</script>
+
+</html>

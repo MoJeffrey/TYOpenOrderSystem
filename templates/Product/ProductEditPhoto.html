@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+    
+    <head>
+        <meta charset="UTF-8">
+        <title>產品圖片修改</title>
+        <meta name="renderer" content="webkit">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+        <link rel="stylesheet" href="/static/css/font.css">
+        <link rel="stylesheet" href="/static/css/xadmin.css">
+        <script type="text/javascript" src="/static/lib/layui/layui.js" charset="utf-8"></script>
+        <script type="text/javascript" src="/static/js/xadmin.js"></script>
+        <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+        <!--[if lt IE 9]>
+            <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+            <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+
+    <body>
+        <div class="layui-fluid">
+            <div class="layui-row">
+                <form class="layui-form">
+                    <div class="layui-card-body">
+                        <img id="ProductImg" src="/static/images/Product/NULL.png" style="
+                        width: 30%;padding: 0 10% 5% 0;">
+                        <button type="button" class="layui-btn layui-btn-warm" id="UploadImg">上傳图片</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>layui.use(['layer', 'upload'],
+            function() {
+                let layer = layui.layer,
+                upload = layui.upload;
+
+                if("{{ Product.HavePhoto }}" === "True"){
+                    let ImgObj = document.getElementById('ProductImg');
+                    ImgObj.src='/static/images/Product/{{ Product.Name }}.jpg?temp=' + Math.random();
+                }
+
+                upload.render({
+                    elem: '#UploadImg',
+                    data: {
+                        csrfmiddlewaretoken:'{{ csrf_token }}',
+                        Name: "{{ Product.Name }}",
+                        HavePhoto: "{{ Product.HavePhoto }}",
+                    },
+                    url: './ProductEditPhoto/ImgUpload/', //改成您自己的上传接口
+                    before: function(obj){
+                        //预读本地文件示例，不支持ie8
+                        obj.preview(function(index, file, result){
+                            $('#ProductImg').attr('src', result);
+                        });
+                    },
+                    done: function(res){
+                        if(res.code){
+                            layer.msg('上传失败');
+                            parent.EditImgStatus = false;
+                        }else {
+                            parent.EditImgStatus = true;
+                            let index = parent.layer.getFrameIndex(window.name);
+                            parent.layer.close(index)
+                        }
+
+                    }
+                });
+
+            });
+		</script>
+        
+    </body>
+
+</html>

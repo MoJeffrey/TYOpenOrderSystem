@@ -1,0 +1,17 @@
+source /home/vcmt/bin/activate
+cd /home/PConcept
+sudo fuser -k 8003/tcp
+uwsgi -i conf.ini
+
+source /home/vcmt/bin/activate
+cd /home/YTHK
+sudo fuser -k 8001/tcp
+uwsgi -i conf.ini
+
+
+source /home/vcmt/bin/activate
+cd /home/Isaacnot
+sudo fuser -k 8004/tcp
+uwsgi -i conf.ini
+
+service nginx restart

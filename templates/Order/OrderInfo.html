@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html class="x-admin-sm">
+    <head>
+        <meta charset="UTF-8">
+        <title>{{ OrderInfo.OrderID }} {{ OrderInfo.Date }} {{ OrderInfo.Name }} {{ OrderInfo.Phone }}</title>
+        <meta name="renderer" content="webkit">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8" />
+        <link rel="stylesheet" href="/static/css/font.css">
+        <link rel="stylesheet" href="/static/css/xadmin.css">
+        <script type="text/javascript" src="/static/lib/layui/layui.js" charset="utf-8"></script>
+        <script type="text/javascript" src="/static/js/xadmin.js"></script>
+        <script type="text/javascript" src="/static/js/PrintOrder/PrintOrder.js"></script>
+        <!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+        <!--[if lt IE 9]>
+            <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+            <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body style="width: 800px;margin-left: auto;margin-right: auto;">
+        <div class="x-nav" style="padding: 3% 1% 1% 1%;">
+            <button class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;" onclick="location.reload()" title="刷新">
+                <i class="layui-icon layui-icon-refresh" style="line-height:30px"></i>
+            </button>
+
+            <button class="layui-btn layui-btn-danger" id="Copy">
+                複製
+            </button>
+
+            <button class="layui-btn layui-btn-danger" id="DownloadOrder">
+                下載訂單
+            </button>
+
+            <button class="layui-btn layui-btn-small" id="SaveOrderMemoData">
+                保存
+            </button>
+
+            <button class="layui-btn layui-btn-danger" id="DelOrder">
+                刪除
+            </button>
+
+        </div>
+        <div class="layui-fluid">
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md12">
+
+                    <div class="layui-card">
+                        <div class="layui-card-body">
+                            <div id="OrderInfoText">
+                                <p>訂單編號: {{ OrderInfo.OrderID }}</p>
+                                <p>日期: {{ OrderInfo.Date }}</p>
+                                <p>名稱: {{ OrderInfo.Name }}</p>
+                                <p>電話: {{ OrderInfo.Phone }}</p>
+                                <p>地址: {{ OrderInfo.Address }}</p>
+                            </div>
+                            <div>
+                                <p style="font-size: 20px;color: red;margin-bottom: 2%;">備忘</p>
+                                <textarea id="OrderMemo" placeholder="请输入内容" class="layui-textarea">{{ OrderInfo.Memo }}</textarea>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div class="layui-card">
+                        <div class="layui-card-body">
+                            <table class="layui-table" id="ItemTable" lay-filter="ItemTable"></table>
+                        </div>
+                    </div>
+
+                    <div class="layui-card">
+                        <div class="layui-card-body">
+
+                            <div style="height: 120px;">
+                                <form class="layui-form" onclick="return false">
+                                    <div class="layui-form-item">
+                                        <div class="layui-input-inline">
+                                            <input type="checkbox" id="Payment" lay-filter="Payment"
+                                                   lay-skin="switch" lay-text="已付款|未付款">
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="layui-form-item">
+                                    <div class="layui-input-inline">
+                                        <div class="layui-upload">
+                                            <button type="button" class="layui-btn layui-btn-sm" id="UploadPaymentVoucher">
+                                                <i class="layui-icon">&#xe67c;</i>
+                                                上傳付款憑證
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="position: absolute;top: 0;bottom: 0;left: 180px;">
+                                <div class="layui-form-item">
+                                    <div class="layui-input-inline">
+                                        <p style="font-size: 20px;color: red;margin-bottom: 2%;">備忘</p>
+                                        <textarea id="PaymentMemo" placeholder="请输入内容" class="layui-textarea">{{ OrderInfo.PaymentMemo }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="layui-upload-list">
+                                <img class="layui-upload-img" id="Preview">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="layui-card">
+                        <div class="layui-card-body">
+
+                            <div style="height: 120px;">
+                                <form class="layui-form" onclick="return false">
+                                    <div class="layui-form-item">
+                                        <div class="layui-input-inline">
+                                            <input type="checkbox" id="ShippingStatus" lay-filter="ShippingStatus"
+                                                   lay-skin="switch" lay-text="已取貨|未取貨">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div style="position: absolute;top: 0;bottom: 0;left: 180px;">
+                                <div class="layui-form-item">
+                                    <div class="layui-input-inline">
+                                        <p style="font-size: 20px;color: red;margin-bottom: 2%;">備忘</p>
+                                        <textarea id="ShippingMemo" placeholder="请输入内容" class="layui-textarea">{{ OrderInfo.ShippingMemo }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <textarea id="InfoTextForCopyString" style="position: absolute;top: 0;left: 0;opacity: 0;z-index: -10;">ces1</textarea>
+    </body>
+
+    <script type="text/html" id="ItemTableToolbar">
+        <div class = "layui-btn-container">
+            <button class = "layui-btn layui-btn-danger" lay-event="Add" >
+			    新增
+			</button>
+			<button class = "layui-btn layui-btn-sm" lay-event="Del">
+				刪除
+			</button>
+
+            <button class = "layui-btn layui-btn-danger" lay-event="AutomaticIdentification" style="background-color: #66ffff">
+			    自動識別
+			</button>
+        </div>
+    </script>
+
+    <script>
+        /**
+         * 表格刷新（不帶參數）
+         */
+        function TableReload() {
+            window.ItemTable.reload({
+                where:{
+                    OrderID: getQueryVariable("OrderID"),
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                }
+            });
+        }
+
+        function getQueryVariable(variable){
+               let query = window.location.search.substring(1);
+               let vars = query.split("&");
+               for (let i=0;i<vars.length;i++) {
+                       let pair = vars[i].split("=");
+                       if(pair[0] === variable){return pair[1];}
+               }
+               return false
+        }
+
+        /**
+         *
+         * @return {boolean}
+         **/
+        function DelItems() {
+            let DelItemList = layui.table.checkStatus('ItemTable').data;
+            let DelList = "";
+
+            if(DelItemList.length === 0){
+                layer.msg("請選擇要刪除的產品！", {icon: 2,shade: 0.3,time: 2000});
+                return false
+            }
+
+            for(let x in DelItemList){
+                if(DelItemList.hasOwnProperty(x) && DelItemList[x] != null)
+                    DelList += DelItemList[x]['Name'] + ",";
+            }
+
+            layer.msg("刪除中...", {icon: 16,shade: 0.3,time: 0});
+
+            $.ajax({
+                type:'post',
+                url:"./OrderInfo/DelItems/",
+                data:{
+                    OrderID: getQueryVariable("OrderID"),
+                    DelList: DelList.slice(0, -1),
+                    csrfmiddlewaretoken:'{{ csrf_token }}',
+                },
+                success:function (data) {
+                    if(data.status) {
+                        layer.alert("已刪除", {icon: 6});
+                        TableReload();
+                    }else {
+                        layer.alert(data.msg, {icon: 2});
+                    }
+                }
+            });
+
+            return true
+        }
+
+        /**
+         * 添加產品
+         */
+        function AddItem() {
+            layer.open({
+                id:1,
+                type: 2,
+                title:'添加產品',
+                skin:'layui-layer-rim',
+                area:['auto', '50%'],
+                content: 'AddItem?OrderID=' + getQueryVariable("OrderID"),
+                end : function() {
+                    TableReload();
+                }
+            });
+        }
+
+        /**
+         * 自動識別
+         */
+         function AutomaticIdentification(){
+            layer.open({
+                id:1,
+                type: 2,
+                title:'自動識別',
+                skin:'layui-layer-rim',
+                area:['auto', '50%'],
+                content: 'AutomaticIdentification?OrderID=' + getQueryVariable("OrderID"),
+                end : function() {
+                    TableReload();
+                }
+            });
+         }
+
+        /**
+         * 表單顯示總金額
+         * @param data
+         * @returns {string}
+         */
+        function tableShowTotalPrice(data){
+            if(data['AllPrice']){
+                return data['AllPrice']
+            }else{
+                return data['TotalPrice']
+            }
+        }
+
+        /**
+         * 在頭部添加内容
+         **/
+        function AddOrderInfoText(No, Name, Num) {
+            let OrderInfoTextDiv = document.getElementById("OrderInfoText");
+            OrderInfoTextDiv.innerHTML += "<p id='OrderInfoTextItem'>" +No+ ".  " +Name+ " " +Num+ "</p>";
+        }
+        
+        function GetInfoTextForCopy() {
+            let Data = layui.table.cache["ItemTable"];
+            Data.pop();
+            for(let x in Data) {
+                window.InfoTextForCopyString += Data[x]['No']+". "+Data[x]['Name']+" ";
+                window.InfoTextForCopyString += Data[x]['Num']+"\n";
+		    }
+
+            let input = document.getElementById("InfoTextForCopyString");
+            input.value = window.InfoTextForCopyString;
+            input.select();
+            document.execCommand("copy");
+        }
+        /**
+         * 預處理資料
+         * 主要就是把總金額加起來
+         * @param Data
+         * @returns {*}
+         * @constructor
+         */
+        function pretreatmentTableData(Data){
+            let AllPrice = 0;
+            while(true){
+                let idObject = document.getElementById('OrderInfoTextItem');
+                if (idObject != null){
+                    idObject.parentNode.removeChild(idObject);
+                }else{
+                    break;
+                }
+            }
+
+            for(let x in Data['data']){
+                if(Data['data'].hasOwnProperty(x) && Data['data'][x] != null){
+                    Data['data'][x]['TotalPrice'] = Math.round(Data['data'][x]['Price']*Data['data'][x]['Num']* 100)/100;
+                    AllPrice += Data['data'][x]['TotalPrice'];
+
+                    Data['data'][x]['TotalPrice'] = "$" + Data['data'][x]['TotalPrice'];
+                    Data['data'][x]['Price'] = "$" + Data['data'][x]['Price'];
+
+                    if(Data['data'][x]['Name'] !== "undefined"){
+                        let No = parseInt(x)+1;
+                        AddOrderInfoText(No, Data['data'][x]['Name'], Data['data'][x]['Num']);
+                    }
+                }
+            }
+
+            AllPrice = Math.round(AllPrice * 100) / 100;
+            Data['data'].push({"AllPrice": "$" + AllPrice});
+            return Data
+        }
+
+        layui.use(['table', 'form', 'upload'],
+            function() {
+                let table = layui.table,
+                form = layui.form,
+                upload = layui.upload;
+                let Payment = {{ OrderInfo.WhetherPaid }};
+                let ShippingStatus = {{ OrderInfo.ShippingStatus }};
+
+                //用於產品資料的內容複製
+                window.InfoTextForCopyString = "訂單編號: {{ OrderInfo.OrderID }}\n";
+                window.InfoTextForCopyString += "名稱: {{ OrderInfo.Name }}\n";
+                window.InfoTextForCopyString += "電話: {{ OrderInfo.Phone }}\n";
+                window.InfoTextForCopyString += "地址: {{ OrderInfo.Address }}\n";
+
+                window.ItemTable = table.render({
+                    elem: "#ItemTable",
+                    url: "./OrderInfo/GetItemList/",
+                    method: "Post",
+                    where: {
+                        OrderID: getQueryVariable("OrderID"),
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    toolbar: '#ItemTableToolbar',
+                    defaultToolbar: [],
+                    cols: [[
+                        {type:'checkbox', width: "5%"},
+                        {field: "No", title: "No.", align: "center", width: "7%"},
+                        {field: "Name", title: "產品", align: "center", width: "50%"},
+                        {field: "Num", title: "數量", align: "center"},
+                        {field: "Price", title: "單價", align: "center"},
+                        {title: "總金額", align: "center",
+                            templet: function(data){return tableShowTotalPrice(data)}
+                        },
+                    ]],
+                    parseData: function (res) {
+                        return new pretreatmentTableData(res)
+                    }
+                });
+
+                if("{{ OrderInfo.PaymentRecordPhoto }}" !== ""){
+                    $('#Preview').attr('src', "/static/images/PaymentVoucher/{{ OrderInfo.PaymentRecordPhoto }}");
+                }
+                // 上傳圖片
+                upload.render({
+                    elem: '#UploadPaymentVoucher',
+                    data: {
+                        csrfmiddlewaretoken:'{{ csrf_token }}',
+                        OrderID: getQueryVariable("OrderID")
+                    },
+                    url: './OrderInfo/UploadPaymentVoucher/', //改成您自己的上传接口
+                    before: function(obj){
+                        //预读本地文件示例，不支持ie8
+                        obj.preview(function(index, file, result){
+                            $('#Preview').attr('src', result);
+                        });
+                    }
+                });
+
+                if("{{ OrderInfo.WhetherPaid }}" === "1"){
+                    $("#Payment").prop("checked",true);
+                    form.render('checkbox');
+                }
+                // 改變付款狀態
+                form.on('switch(Payment)', function(data){
+                    if(data.value){
+                        if(Payment === 0){
+                            Payment = 1;
+                        }else{
+                            Payment = 0;
+                        }
+                    }
+
+                    $.ajax({
+                        type:'post',
+                        url:"./OrderInfo/PaymentToChange/",
+                        data:{
+                            OrderID: getQueryVariable("OrderID"),
+                            Payment: Payment,
+                            csrfmiddlewaretoken:'{{ csrf_token }}',
+                        }
+                    });
+
+                });
+
+                if("{{ OrderInfo.ShippingStatus }}" === "1"){
+                    $("#ShippingStatus").prop("checked",true);
+                    form.render('checkbox');
+                }
+                // 改變出貨狀態
+                form.on('switch(ShippingStatus)', function(data){
+                    if(data.value){
+                        if(ShippingStatus === 0){
+                            ShippingStatus = 1;
+                        }else{
+                            ShippingStatus = 0;
+                        }
+                    }
+
+                    $.ajax({
+                        type:'post',
+                        url:"./OrderInfo/ShippingStatusToChange/",
+                        data:{
+                            OrderID: getQueryVariable("OrderID"),
+                            ShippingStatus: ShippingStatus,
+                            csrfmiddlewaretoken:'{{ csrf_token }}',
+                        }
+                    });
+
+                });
+
+                // 產品列表頭部功能列表
+				table.on('toolbar(ItemTable)', function (obj) {
+					if (obj.event === 'Add') {
+						AddItem();
+					}else if(obj.event === 'Del'){
+                        DelItems();
+                    }else if(obj.event === 'AutomaticIdentification'){
+                        AutomaticIdentification();
+                    }
+				});
+
+				$('#Copy').click(function(){
+                    GetInfoTextForCopy();
+                });
+
+				// 下載訂單
+				$('#DownloadOrder').click(function(){
+
+				    $.ajax({
+                        type:'post',
+                        url:"/Settings/PrintSettings/GetPrintData/",
+                        data:{
+                            csrfmiddlewaretoken: '{{ csrf_token }}',
+                        },
+                        success:function (data) {
+                            if(data.status) {
+                                let Data = layui.table.cache["ItemTable"];
+                                let PO = new PrintOrder();
+
+                                PO.SetCompany(data['Name'], data['Address'], data['Phone']);
+                                PO.SetTransferInformation(data['Payment']);
+                                PO.SetMemo(data['Memo']);
+
+                                let OrderID = "{{ OrderInfo.OrderID }}";
+                                let OrderDate = "{{ OrderInfo.Date }}";
+                                let CustomerName = "{{ OrderInfo.Name }}";
+                                let CustomerAddress = "{{ OrderInfo.Address }}";
+                                let CustomerPhone = "{{ OrderInfo.Phone }}";
+                                PO.SetCustomerInformation(
+                                    OrderID,
+                                    OrderDate,
+                                    CustomerName,
+                                    CustomerAddress,
+                                    CustomerPhone)
+                                ;
+
+                                PO.SetItem(Data, [65, 105, 225]);
+                                PO.Save(OrderID + " " + OrderDate + " " + CustomerName + " " + CustomerPhone);
+                            }else {
+                                layer.alert(data.msg, {icon: 2});
+                            }
+                        }
+                    });
+                });
+
+				// 保存訂單備忘資料
+                $('#SaveOrderMemoData').click(function(){
+                    let OrderMemo = $("#OrderMemo").val();
+                    let PaymentMemo = $("#PaymentMemo").val();
+                    let ShippingMemo = $("#ShippingMemo").val();
+
+                    $.ajax({
+                        type:'post',
+                        url:"./OrderInfo/SaveMemo/",
+                        data:{
+                            OrderID: getQueryVariable("OrderID"),
+                            Memo: OrderMemo,
+                            PaymentMemo: PaymentMemo,
+                            ShippingMemo: ShippingMemo,
+                            csrfmiddlewaretoken:'{{ csrf_token }}',
+                        }
+                    });
+                });
+
+                // 刪除訂單
+                $('#DelOrder').click(function(){
+                    let Parameter = {btn: ['是','否'], time: 200000};
+
+                    /**
+                     * 確定
+                     */
+                    function Determine(index){
+                        $.ajax({
+                            type:'post',
+                            url:"./OrderInfo/DelOrder/",
+                            data:{
+                                OrderID: getQueryVariable("OrderID"),
+                                csrfmiddlewaretoken: '{{ csrf_token }}',
+                            },
+                            success:function (data) {
+                                if(data.status) {
+                                    layer.alert("刪除成功", {icon: 6});
+                                    window.opener=null;
+                                    window.open('','_self');
+                                    window.close();
+                                }else {
+                                    layer.alert(data.msg, {icon: 2});
+                                }
+                            }
+                        });
+                        layer.close(index);
+                    }
+
+                    /**
+                     * 取消
+                     */
+                    function Cancel(index){
+                        layer.close(index);
+                    }
+
+                    layer.confirm('是否刪除該產品？', Parameter, Determine, Cancel);
+                });
+
+
+            });
+    </script>
+</html>
